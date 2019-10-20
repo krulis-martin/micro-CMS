@@ -1,0 +1,21 @@
+baseUri: '/micro-CMS'
+templates: 'templates'
+tmpDir: 'tmp'
+
+project:
+  title: "uCMS Demo"
+  heading: "Demo uCMS Project"
+  author: "Martin Kruliš"
+  description: "Demonstration how to use uCMS framework."
+  keywords: "demo,framework,uCMS"
+
+directories:
+  pages:
+    - PassThrough
+    - Menu
+    - Html
+    - Markdown
+  resources:
+    - PassThrough
+  downloads:
+    - Download

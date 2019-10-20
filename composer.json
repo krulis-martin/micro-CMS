@@ -1,0 +1,16 @@
+{
+    "name": "krulis/micro-cms",
+    "description": "A PHP framework for creating simple web pages (e.g., info pages for lectures).",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Martin Krulis",
+            "email": "krulis@ksi.mff.cuni.cz"
+        }
+    ],
+    "require": {
+        "erusev/parsedown": "^1.7",
+        "latte/latte": "^2.5"
+    }
+}
