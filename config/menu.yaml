@@ -1,0 +1,9 @@
+items:
+  - url: pages/index
+    caption:
+      en: Welcome
+      cs: Vítejte
+  - url: pages/about
+    caption:
+      en: About
+      cs: O demu

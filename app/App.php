@@ -2,79 +2,267 @@
 
 namespace uCMS;
 
-use Exception;
 use uCMS\Processors\IProcessor;
 use uCMS\Helpers\Strings;
-
+use Latte;
+use Exception;
 
 /**
  * The application is both the container and executor of the rendering algorithm.
  */
 class App
 {
+    // HTTP exit codes
     const ERROR_CODE_404_NOT_FOUND = 404;
     const ERROR_CODE_500_INTERNAL_ERROR = 500;
+
+    // Incomplete list of HTTP error code translations
+    const ERROR_CODE_MESSAGES = [
+        400 => 'Bad Request',
+        401 => 'Unauthorized',
+        403 => 'Forbidden',
+        404 => 'Not Found',
+        500 => 'Internal Server Error',
+        501 => 'Not Implemented',
+    ];
+
+
+    // Key used for URL params and cookies to store selected language.
+    const LANG_KEY = 'uCMS_lang';
 
     /**
      * @var Config
      */
     private $config;
 
+    /**
+     * @var string|null
+     * Original URI resolved by execute method.
+     */
+    private $uri = null;
 
+    /**
+     * @var string|null
+     * Path extracted from original uri.
+     */
+    private $rawPath = null;
+
+    /**
+     * @var array
+     * Path without prefix and splitted by '/'.
+     */
+    private $path = [];
+
+    /**
+     * @var array
+     * Parsed URI query (identical to $_GET, if current request URI is processed).
+     */
+    private $query = [];
+
+    /**
+     * @var string|null
+     * Identifier of selected language (null if i18n is switched off).
+     */
+    private $currentLang = null;
+
+    /**
+     * Initialize container with given configuration.
+     * @param Config $config
+     */
     public function __construct(Config $config)
     {
         $this->config = $config;
     }
 
-   
+    /**
+     * Read-only accessor to private values.
+     */
+    public function __get($name)
+    {
+        if (isset($this->$name)) {
+            return $this->$name;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Isset tester that accompanies the read-only private values accessor.
+     */
+    public function __isset($name)
+    {
+        return isset($this->$name);
+    }
+
+    /*
+     * Internationalization Support
+     */
+
+    public function getBaseUri()
+    {
+        return $this->config->value('baseUri', '/');
+    }
+
     /**
      * Preprocess the string URI (remove prefix and query) and split it by '/'.
      * @param string $uri URI to be preprocessed
-     * @return array
      */
-    private function preprocessUri(string $uri): array
+    private function preprocessUri(string $uri)
     {
-        $baseUri = $this->config->value('baseUri', '');
-        if (!$baseUri) return $uri;
+        $this->uri = $uri;
+        if (strpos($uri, '?') !== false) {
+            list($this->rawPath, $queryStr) = explode('?', $uri, 2);
+            if ($queryStr) {
+                parse_str($queryStr, $this->query);
+            }
+        } else {
+            $this->rawPath = $uri;
+        }
 
-        $trimmedUri = Strings::removePrefix($uri, $baseUri);
-        if ($baseUri && $trimmedUri == $uri) { // nothing was trimmed...
-            throw new Exception("Given URI '$uri' is not prefixed with base URI '$baseUri'.");
+        $baseUri = $this->getBaseUri();
+        $trimmedPath = Strings::removePrefix($this->rawPath, $baseUri);
+        if ($baseUri && $trimmedPath == $this->rawPath) { // nothing was trimmed...
+            throw new Exception("Given URI path '$this->rawPath' is not prefixed with base URI path '$baseUri'.");
         }
         
-        $trimmedUri = preg_replace('/[?].*$/', '', $trimmedUri);
-        $parsed = explode('/', $trimmedUri);
-        return array_values(array_filter($parsed));
+        $this->path = array_values(array_filter(explode('/', $trimmedPath)));
+            
+        if ($this->path && is_dir($this->getPath())) {
+            $this->path[] = 'index'; // default file in a directory
+        }
     }
 
-
     /**
-     * Convert parsed URI (array of tokens) into actual path.
-     * @param string[] $parsedUri Array of string tokens (steps of URI path).
+     * Convert parsed URI path (array of tokens) into actual path.
+     * @param string[]|null $path Array of string tokens (steps of URI path). If missing, $this->path is used instead.
      * @return string
      */
-    private function getPath(array $parsedUri): string
+    private function getPath(array $path = null): string
     {
-        return __DIR__ . '/../' . implode('/', $parsedUri);
+        if ($path === null) {
+            $path = $this->path;
+        }
+        return __DIR__ . '/../' . implode('/', $path);
     }
 
+    /**
+     * Are locales present in configuration (internationalization is active).
+     */
+    public function getLangs(): ?array
+    {
+        $langs = $this->config->value('langs', []);
+        return ($langs && count($langs) > 1) ? $langs : null;
+    }
 
     /**
-     * Show page with error HTTP response (4xx or 5xx).
+     * Attempt to get the best available language from Accept-Language HTTP header.
+     * @return string|null Language identifier, null if no suitable lang was found.
+     */
+    private function getLangFromHTTP(): ?string
+    {
+        $langs = $this->getLangs();
+        $acceptLangs = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+        foreach ($acceptLangs as $lang) {
+            $lang = preg_replace('/;q=.*$/', '', trim($lang)); // trim and remove quality...
+            if (in_array($lang, $langs)) return $lang;
+
+            // try also generic locale (e.g. 'en' instead of 'en-US')
+            $lang = preg_replace('/-.*$/', '', $lang);
+            if (in_array($lang, $langs)) return $lang;
+        }
+
+        return null;
+    }
+
+    /**
+     * Process langs config and fingure out current language.
+     * Handle language change (from query data).
+     */
+    private function initLangs()
+    {
+        $langs = $this->getLangs();
+        if (!$langs) return;
+
+        // If the lang is set in query parameters...
+        if (array_key_exists(self::LANG_KEY, $this->query)) {
+            // ... and it is valid -> change the current language.
+            // Yes, we are violating semantics of GET request here, but the operation is idempotent.
+            if (in_array($this->query[self::LANG_KEY], $langs)) {
+                $this->currentLang = $this->query[self::LANG_KEY];
+                setcookie(self::LANG_KEY, $this->currentLang);
+            }
+
+            // Remove the lang from query parameters and redirect to self...
+            unset($this->query[self::LANG_KEY]);
+            $url = $this->rawPath;
+            if ($this->query) {
+                $url .= '?' . http_build_query($this->query);
+            }
+            header("Location: $url");
+            exit;
+        }
+
+        // If the lang is set in cookies ...
+        if (array_key_exists(self::LANG_KEY, $_COOKIE) && in_array($_COOKIE[self::LANG_KEY], $langs)) {
+            $this->currentLang = $_COOKIE[self::LANG_KEY];
+        }
+
+        // Try to get the language from Accept-Language HTTP header...
+        elseif (($httpLang = $this->getLangFromHTTP()) !== null) {
+            $this->currentLang = $httpLang;
+        }
+
+        // English is prefered default...
+        elseif (in_array('en', $langs)) {
+            $this->currentLang = 'en';
+        }
+
+        // If everything fails, get first lang of the config...
+        else {
+            $this->currentLang = reset($langs);
+        }
+    }
+
+    /**
+     * Get path to template file for given HTTP error.
+     * @param int $code HTTP error code
+     * @return string|null Path or null if no template is available
+     */
+    private function getErrorTemplate(int $code): ?string
+    {
+        $templateDir = $this->getTemplatesDirectory();
+        $candidates = [ "$templateDir/error_$code.latte", "$templateDir/error.latte" ];
+        foreach ($candidates as $template) {
+            if (is_file($template) && is_readable($template)) return $template;
+        }
+        return null;
+    }
+
+    /**
+     * Show page with error HTTP response (4xx or 5xx) and terminate.
      * @param int $code HTTP response code to be set
      */
     public function showErrorPage(int $code = self::ERROR_CODE_500_INTERNAL_ERROR)
     {
         http_response_code($code);
-        echo "Response Code $code (TODO)";   // TODO
+        $message = array_key_exists($code, self::ERROR_CODE_MESSAGES) ? self::ERROR_CODE_MESSAGES[$code] : '';
+
+        $template = $this->getErrorTemplate($code);
+        if ($template) {
+            $latte = $this->createLatteEngine();
+            $latte->render($template, [ 'code' => $code, 'message' => $message ]);
+        } else {
+            header('Content-Type: text/plain');
+            echo "HTTP Response: $code $message";
+        }
         exit;
     }
 
 
     /**
-     * Get processor object from configuration.
+     * Get content processor object from configuration.
      * @param mixed $key Key from the config. array of processors
-     * @param mixed $key Value from the config. array of processors
+     * @param mixed $value Value from the config. array of processors
      * @return IProcessor|null
      */
     private function getProcessor($key, $value): ?IProcessor
@@ -92,23 +280,20 @@ class App
         return null;
     }
 
-
     /**
      * Main routine that process the URI and show appropriate page.
      * @param string $uri
      */
     public function execute(string $uri)
     {
-        $parsedUri = $this->preprocessUri($uri);
-        if (!$parsedUri) {
+        $this->preprocessUri($uri);
+        $this->initLangs();
+
+        if (!$this->path) {
             $this->showErrorPage(self::ERROR_CODE_404_NOT_FOUND); // and die
         }
 
-        if (is_dir($this->getPath($parsedUri))) {
-            $parsedUri[] = 'index'; // default file in a directory
-        }
-
-        $rootDir = $parsedUri[0];
+        $rootDir = $this->path[0];
         $processors = $this->config->directories->value($rootDir, null);
         if ($processors === null) {
             // Trying to access directory not explicitly listed in config
@@ -116,7 +301,7 @@ class App
         }
 
         // Prepare the response...
-        $response = new Response($this->config, $this->getPath($parsedUri));
+        $response = new Response($this, $this->getPath(), $this->currentLang);
         $handled = false;
 
         foreach ($processors as $key => $value) {
@@ -141,5 +326,28 @@ class App
         } else {
             $this->showErrorPage(self::ERROR_CODE_404_NOT_FOUND); // and die
         }
+    }
+
+    /**
+     * Return directory where the templates should be found.
+     * @return string
+     */
+    public function getTemplatesDirectory(): string
+    {
+        return __DIR__ . '/../' . $this->config->value('templates', 'templates');
+    }
+
+    /**
+     * Factory for Latte engine objects.
+     */
+    public function createLatteEngine()
+    {
+        $latte = new Latte\Engine();
+        $tmpDir = $this->config->value('tmpDir', 'tmp');
+        if ($tmpDir[0] !== '/') {
+            $tmpDir = __DIR__ . '/../' . $tmpDir . '/latte';
+        }
+        $latte->setTempDirectory($tmpDir);
+        return $latte;
     }
 }

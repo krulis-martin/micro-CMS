@@ -25,10 +25,10 @@ catch (Exception $e) {
     exit;
 }
 
-//try {
+try {
     $app = new uCMS\App($config);
     $app->execute($_SERVER['REQUEST_URI']);
-//}
-//catch (Exception $e) {
-//    $app->showErrorPage();
-//}
+}
+catch (Exception $e) {
+    $app->showErrorPage();
+}

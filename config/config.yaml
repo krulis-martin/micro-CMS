@@ -4,7 +4,9 @@ tmpDir: 'tmp'
 
 project:
   title: "uCMS Demo"
-  heading: "Demo uCMS Project"
+  heading:
+    en: "Demo uCMS Project"
+    cs: "uCMS Demíčko"
   author: "Martin Kruliš"
   description: "Demonstration how to use uCMS framework."
   keywords: "demo,framework,uCMS"
@@ -19,3 +21,7 @@ directories:
     - PassThrough
   downloads:
     - Download
+
+langs:
+  - en
+  - cs

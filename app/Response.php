@@ -85,11 +85,23 @@ class Response
             return $ext && in_array($ext, $extensions);
         }
 
+        // Prepare language suffixes (like `_en`) for the possible translations
+        if ($this->lang !== null) {
+            $langs = [ "_$this->lang", '' /* no translations is tested right after exact match */ ];
+            foreach ($this->app->getLangs() as $lang) {
+                if ($lang !== $this->lang) $langs[] = "_$lang";
+            }
+        } else {
+            $langs = [ '' ]; // no suffix
+        }
+
         // Let's try appending allowed extensions using path as prefix.
-        foreach ($extensions as $ext) {
-            if ($this->isFilePathValid(".$ext")) {
-                $this->filePath .= ".$ext";
-                return true;
+        foreach ($langs as $lang) {
+            foreach ($extensions as $ext) {
+                if ($this->isFilePathValid("$lang.$ext")) {
+                    $this->filePath .= "$lang.$ext";
+                    return true;
+                }
             }
         }
 
@@ -122,30 +134,89 @@ class Response
         $this->latteParameters = [];
     }
 
+    /**
+     * Helper method that retrieves localized config value.
+     * @param mixed $value Either string value, or a map [ lang => translation ]
+     * @return string
+     */
+    public function getLocalizedValue($value): string
+    {
+        // No localization (simple string)
+        if (is_string($value)) return $value;
+        
+        if (is_object($value)) $value = (array)$value;
+        if (is_array($value)) {
+            if (!$this->lang) {
+                return reset($value); // no translations -> pick first
+            }
+
+            // Exact match for current language found.
+            if (array_key_exists($this->lang, $value)) return $value[$this->lang];
+
+            // Let's try all languages in the order in which they are given (first match is taken)
+            foreach ($this->app->getLangs() as $lang) {
+                if (array_key_exists($lang, $value)) return $value[$lang];
+            }
+        }
+        throw new Exception("Unable to retrieve localized value.");
+    }
+
     /*
      * Internal interface (called by App)
      */
 
     /**
-     * @var Config
+     * @var App
      */
-    private $config;
+    private $app;
 
     /**
-     * Initialize the response using configuration and file path extracted from URI.
-     * @param Config $config
-     * @param string $filePath
+     * @var string|null
+     * Current language (null if i18n is not enabled)
      */
-    public function __construct(Config $config, string $filePath)
+    private $lang = null;
+
+    /**
+     * Read-only accessor to private values.
+     */
+    public function __get($name)
     {
-        $this->config = $config;
+        if (isset($this->$name)) {
+            return $this->$name;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Isset tester that accompanies the read-only private values accessor.
+     */
+    public function __isset($name)
+    {
+        return isset($this->$name);
+    }
+
+    /**
+     * Initialize the response
+     * @param App $app Reference to application container
+     * @param string $filePath Actual path to file being served (or its prefix)
+     * @param string|null $lang Requested translation, null if i18n is not active
+     */
+    public function __construct(App $app, string $filePath, string $lang = null)
+    {
+        $this->app = $app;
+        $this->lang = $lang;
         $this->filePath = $filePath;
 
-        $templateDir = $config->value('templates', null);
-        $template = __DIR__ . '/../' . $templateDir . '/default.latte';
-        if ($templateDir && is_file($template) && is_readable($template)) {
+        $template = $app->getTemplatesDirectory() . '/default.latte';
+        if (is_file($template) && is_readable($template)) {
             $this->latteTemplate = $template;
-            $this->latteParameters = $config->value('project', []);
+            foreach ($app->config->value('project', []) as $key => $value) {
+                $this->latteParameters[$key] = $this->getLocalizedValue($value);
+            }
+            $this->latteParameters['currentLanguage'] = $lang;
+            $this->latteParameters['languages'] = $app->getLangs();
+            $this->latteParameters['baseUri'] = $app->getBaseUri();
         }
     }
 
@@ -169,19 +240,10 @@ class Response
 
         if ($this->latteTemplate) {
             // Render contents using latte template...
-            $latte = new Latte\Engine;
-
-            $tmpDir = $this->config->value('tmpDir', 'tmp');
-            if ($tmpDir[0] !== '/') {
-                $tmpDir = __DIR__ . '/../' . $tmpDir . '/latte';
-            }
-            $latte->setTempDirectory($tmpDir);
-
-            // Add the contents to the template parameters...
+            $latte = $this->app->createLatteEngine();
             $this->latteParameters['contents'] = $this->contents
                 ? (string)$this->contents
                 : file_get_contents($this->filePath);
-
             $latte->render($this->latteTemplate, $this->latteParameters);
         } else {
             // Render contents as is...

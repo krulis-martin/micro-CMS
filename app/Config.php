@@ -4,6 +4,7 @@ namespace uCMS;
 
 use Exception;
 use ArrayAccess;
+use Iterator;
 
 
 /**
@@ -15,7 +16,7 @@ class ConfigException extends Exception {}
 /**
  * A class wrapper representing read-only structured config.
  */
-class Config implements ArrayAccess
+class Config implements ArrayAccess, Iterator
 {
     /**
      * Load a configuration from a Yaml file.
@@ -105,21 +106,24 @@ class Config implements ArrayAccess
         throw new ConfigException("Config is read-only.");
     }
 
+    /*
+     * ArrayAccess
+     */
 
     public function offsetExists($offset)
     {
         if (!is_array($this->data)) {
-            throw new ConfigException("Trying to access '$name' key on a scalar value.");
+            throw new ConfigException("Trying to access '$offset' key on a scalar value.");
         }
-        return array_key_exists($name, $this->data);
+        return array_key_exists($offset, $this->data);
     }
 
     public function offsetGet($offset)
     {
         if (!is_array($this->data)) {
-            throw new ConfigException("Trying to access '$name' key on a scalar value.");
+            throw new ConfigException("Trying to access '$offset' key on a scalar value.");
         }
-        return new Config(array_key_exists($name, $this->data) ? $this->data[$name] : []);
+        return new Config(array_key_exists($offset, $this->data) ? $this->data[$offset] : []);
     }
 
     public function offsetSet($offset, $value)
@@ -130,5 +134,49 @@ class Config implements ArrayAccess
     public function offsetUnset($offset)
     {
         throw new ConfigException("Config is read-only.");
+    }
+
+    /*
+     * Iterator 
+     */
+
+    public function current()
+    {
+        if (!is_array($this->data)) {
+            throw new ConfigException("Trying to iterate over a scalar value.");
+        }
+        return new Config(current($this->data));
+    }
+
+    public function key()
+    {
+        if (!is_array($this->data)) {
+            throw new ConfigException("Trying to iterate over a scalar value.");
+        }
+        return key($this->data);
+    }
+
+    public function next()
+    {
+        if (!is_array($this->data)) {
+            throw new ConfigException("Trying to iterate over a scalar value.");
+        }
+        next($this->data);
+    }
+
+    public function rewind()
+    {
+        if (!is_array($this->data)) {
+            throw new ConfigException("Trying to iterate over a scalar value.");
+        }
+        reset($this->data);
+    }
+
+    public function valid()
+    {
+        if (!is_array($this->data)) {
+            throw new ConfigException("Trying to iterate over a scalar value.");
+        }
+        return key($this->data) !== null;
     }
 }

@@ -19,6 +19,7 @@
 
 	# front controller
 	RewriteCond %{REQUEST_URI} !=index.php
+	RewriteCond %{REQUEST_URI} !^/micro-CMS/resources/
 	RewriteRule .* index.php [L]
 </IfModule>
 
