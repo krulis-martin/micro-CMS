@@ -2,7 +2,6 @@
 
 namespace uCMS\Helpers;
 
-
 /**
  * String helper functions.
  */

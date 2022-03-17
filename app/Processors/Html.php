@@ -9,11 +9,13 @@ use uCMS\Response;
  */
 class Html implements IProcessor
 {
-    const HTML_FILE_EXTENSIONS = [ 'html', 'htm' ];
+    public const HTML_FILE_EXTENSIONS = [ 'html', 'htm' ];
 
     public function process(Response $response): bool
     {
-        if ($response->contents) return false;
+        if ($response->contents) {
+            return false;
+        }
 
         if ($response->tryFilePathExtensions(self::HTML_FILE_EXTENSIONS)) {
             $response->loadContents();

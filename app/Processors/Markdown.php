@@ -10,11 +10,13 @@ use Parsedown;
  */
 class Markdown implements IProcessor
 {
-    const MARKDOWN_FILE_EXTENSIONS = [ 'md' ];
+    public const MARKDOWN_FILE_EXTENSIONS = [ 'md' ];
 
     public function process(Response $response): bool
     {
-        if ($response->contents) return false;
+        if ($response->contents) {
+            return false;
+        }
 
         if ($response->tryFilePathExtensions(self::MARKDOWN_FILE_EXTENSIONS)) {
             $response->loadContents();

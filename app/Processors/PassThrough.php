@@ -4,13 +4,12 @@ namespace uCMS\Processors;
 
 use uCMS\Response;
 
-
 /**
  * Simply passes the file avoiding the template and without any modifications.
  */
 class PassThrough implements IProcessor
 {
-    const DEFAULT_EXTENSIONS = [
+    public const DEFAULT_EXTENSIONS = [
         'aac'    => 'audio/aac',
         'avi'    => 'video/x-msvideo',
         'bin'    => 'application/octet-stream',
@@ -87,8 +86,10 @@ class PassThrough implements IProcessor
 
     public function process(Response $response): bool
     {
-        if ($response->contents || !$response->isFilePathValid()) return false;
-        
+        if ($response->contents || !$response->isFilePathValid()) {
+            return false;
+        }
+
         $ext = $response->getFilePathExtension();
         if (array_key_exists($ext, $this->extensions)) {
             $response->setContentType($this->extensions[$ext]);

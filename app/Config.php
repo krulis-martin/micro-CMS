@@ -6,11 +6,12 @@ use Exception;
 use ArrayAccess;
 use Iterator;
 
-
 /**
  * Exception thrown when something goes wrong with the configuration.
  */
-class ConfigException extends Exception {}
+class ConfigException extends Exception
+{
+}
 
 
 /**
@@ -23,7 +24,7 @@ class Config implements ArrayAccess, Iterator
      * @param string $fileName Path to the file to be parsed.
      * @return Config
      */
-    static public function loadYaml(string $fileName): Config
+    public static function loadYaml(string $fileName): Config
     {
         if (!function_exists('yaml_parse_file')) {
             throw new Exception("Function 'yaml_parse_file' not found. PHP requires Yaml extension for uCMS\Config::loadYaml to work.");
@@ -37,7 +38,7 @@ class Config implements ArrayAccess, Iterator
         if ($yaml === false) {
             throw new ConfigException("File '$fileName' cannot be parsed as yaml file correctly.");
         }
-        
+
         return new Config($yaml);
     }
 
@@ -79,7 +80,7 @@ class Config implements ArrayAccess, Iterator
     /*
      * PHP Accessor Methods
      */
-    
+
     public function __isset($name)
     {
         if (!is_array($this->data)) {
@@ -137,7 +138,7 @@ class Config implements ArrayAccess, Iterator
     }
 
     /*
-     * Iterator 
+     * Iterator
      */
 
     public function current()

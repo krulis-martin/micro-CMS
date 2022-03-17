@@ -5,7 +5,6 @@ namespace uCMS;
 use Exception;
 use Latte;
 
-
 /**
  * Wrapper that holds the contents of the response.
  * This in not a HTTP response in PSR-7 sense.
@@ -89,7 +88,9 @@ class Response
         if ($this->lang !== null) {
             $langs = [ "_$this->lang", '' /* no translations is tested right after exact match */ ];
             foreach ($this->app->getLangs() as $lang) {
-                if ($lang !== $this->lang) $langs[] = "_$lang";
+                if ($lang !== $this->lang) {
+                    $langs[] = "_$lang";
+                }
             }
         } else {
             $langs = [ '' ]; // no suffix
@@ -142,20 +143,28 @@ class Response
     public function getLocalizedValue($value): string
     {
         // No localization (simple string)
-        if (is_string($value)) return $value;
-        
-        if (is_object($value)) $value = (array)$value;
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (is_object($value)) {
+            $value = (array)$value;
+        }
         if (is_array($value)) {
             if (!$this->lang) {
                 return reset($value); // no translations -> pick first
             }
 
             // Exact match for current language found.
-            if (array_key_exists($this->lang, $value)) return $value[$this->lang];
+            if (array_key_exists($this->lang, $value)) {
+                return $value[$this->lang];
+            }
 
             // Let's try all languages in the order in which they are given (first match is taken)
             foreach ($this->app->getLangs() as $lang) {
-                if (array_key_exists($lang, $value)) return $value[$lang];
+                if (array_key_exists($lang, $value)) {
+                    return $value[$lang];
+                }
             }
         }
         throw new Exception("Unable to retrieve localized value.");

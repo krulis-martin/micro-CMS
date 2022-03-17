@@ -13,11 +13,11 @@ use Exception;
 class App
 {
     // HTTP exit codes
-    const ERROR_CODE_404_NOT_FOUND = 404;
-    const ERROR_CODE_500_INTERNAL_ERROR = 500;
+    public const ERROR_CODE_404_NOT_FOUND = 404;
+    public const ERROR_CODE_500_INTERNAL_ERROR = 500;
 
     // Incomplete list of HTTP error code translations
-    const ERROR_CODE_MESSAGES = [
+    public const ERROR_CODE_MESSAGES = [
         400 => 'Bad Request',
         401 => 'Unauthorized',
         403 => 'Forbidden',
@@ -28,7 +28,7 @@ class App
 
 
     // Key used for URL params and cookies to store selected language.
-    const LANG_KEY = 'uCMS_lang';
+    public const LANG_KEY = 'uCMS_lang';
 
     /**
      * @var Config
@@ -124,9 +124,9 @@ class App
         if ($baseUri && $trimmedPath == $this->rawPath) { // nothing was trimmed...
             throw new Exception("Given URI path '$this->rawPath' is not prefixed with base URI path '$baseUri'.");
         }
-        
+
         $this->path = array_values(array_filter(explode('/', $trimmedPath)));
-            
+
         if ($this->path && is_dir($this->getPath())) {
             $this->path[] = 'index'; // default file in a directory
         }
@@ -164,11 +164,15 @@ class App
         $acceptLangs = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
         foreach ($acceptLangs as $lang) {
             $lang = preg_replace('/;q=.*$/', '', trim($lang)); // trim and remove quality...
-            if (in_array($lang, $langs)) return $lang;
+            if (in_array($lang, $langs)) {
+                return $lang;
+            }
 
             // try also generic locale (e.g. 'en' instead of 'en-US')
             $lang = preg_replace('/-.*$/', '', $lang);
-            if (in_array($lang, $langs)) return $lang;
+            if (in_array($lang, $langs)) {
+                return $lang;
+            }
         }
 
         return null;
@@ -181,7 +185,9 @@ class App
     private function initLangs()
     {
         $langs = $this->getLangs();
-        if (!$langs) return;
+        if (!$langs) {
+            return;
+        }
 
         // If the lang is set in query parameters...
         if (array_key_exists(self::LANG_KEY, $this->query)) {
@@ -202,23 +208,17 @@ class App
             exit;
         }
 
-        // If the lang is set in cookies ...
         if (array_key_exists(self::LANG_KEY, $_COOKIE) && in_array($_COOKIE[self::LANG_KEY], $langs)) {
+            // If the lang is set in cookies ...
             $this->currentLang = $_COOKIE[self::LANG_KEY];
-        }
-
-        // Try to get the language from Accept-Language HTTP header...
-        elseif (($httpLang = $this->getLangFromHTTP()) !== null) {
+        } elseif (($httpLang = $this->getLangFromHTTP()) !== null) {
+            // Try to get the language from Accept-Language HTTP header...
             $this->currentLang = $httpLang;
-        }
-
-        // English is prefered default...
-        elseif (in_array('en', $langs)) {
+        } elseif (in_array('en', $langs)) {
+            // English is prefered default...
             $this->currentLang = 'en';
-        }
-
-        // If everything fails, get first lang of the config...
-        else {
+        } else {
+            // If everything fails, get first lang of the config...
             $this->currentLang = reset($langs);
         }
     }
@@ -233,7 +233,9 @@ class App
         $templateDir = $this->getTemplatesDirectory();
         $candidates = [ "$templateDir/error_$code.latte", "$templateDir/error.latte" ];
         foreach ($candidates as $template) {
-            if (is_file($template) && is_readable($template)) return $template;
+            if (is_file($template) && is_readable($template)) {
+                return $template;
+            }
         }
         return null;
     }
@@ -311,7 +313,8 @@ class App
                 throw new Exception("Unable to determine processor class from configuration of '$rootDir'.");
             }
 
-            // Call the processor to augment the response (the processor may also choose to complete the response and die).
+            // Call the processor to augment the response
+            // (the processor may also choose to complete the response and die).
             if (($handled = $processor->process($response))) {
                 break;  // processor signals that the contents has been handled
             }

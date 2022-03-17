@@ -6,7 +6,7 @@ A PHP framework for creating simple web pages (e.g., info pages for lectures). W
 
 * KISS (Keep It Stupid Simple) -- the deployment and content management must be simple enough, so that user with HTML/Markdown knowledge has to be able to use it directly.
 * DRY (Don't Repeat Yourself) -- the framework automatically handles the page layout template (header, menu, ...), so the user should write only the contents.
-* SOLID -- the internal interfaces are designed so that framewokr can be easily extended and configured.
+* SOLID -- the internal interfaces are designed so that framework can be easily extended and configured.
 
 Bulky CMS frameworks also provide clever data management for the contents (DB storage, versioning, etc.) and UI for editting the contents. The uCMS does not. It is user's job to do this, so the web page may be easily deployed almost anywhere (only PHP is requried) and stored anywhere (e.g., on GitHub). The user may manage the contents in his/her favorite text editor.
 

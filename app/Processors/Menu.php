@@ -19,7 +19,9 @@ class Menu implements IProcessor
             foreach ($menuConfig->items as $item) {
                 $caption = $item->value('caption', null);
                 $url = $item->value('url', null);
-                if (!$caption || !$url) continue;
+                if (!$caption || !$url) {
+                    continue;
+                }
 
                 $menu[] = (object)[
                     'caption' => $response->getLocalizedValue($caption),

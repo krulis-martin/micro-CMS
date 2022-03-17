@@ -17,6 +17,7 @@ directories:
     - Menu
     - Html
     - Markdown
+    - Php
   resources:
     - PassThrough
   downloads:

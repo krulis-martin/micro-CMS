@@ -17,8 +17,7 @@ spl_autoload_register(function ($class) {
 try {
     // In the first version, the config is loaded from exact file.
     $config = uCMS\Config::loadYaml(__DIR__ . '/config/config.yaml');
-}
-catch (Exception $e) {
+} catch (Exception $e) {
     http_response_code(500);
     header('Content-Type: text/plain');
     echo "Internal Error: Unable to load configuration file.\n";
@@ -28,7 +27,6 @@ catch (Exception $e) {
 try {
     $app = new uCMS\App($config);
     $app->execute($_SERVER['REQUEST_URI']);
-}
-catch (Exception $e) {
+} catch (Exception $e) {
     $app->showErrorPage();
 }

@@ -4,7 +4,6 @@ namespace uCMS\Processors;
 
 use uCMS\Response;
 
-
 /**
  * Interface for all content (response) processors.
  */
