@@ -235,7 +235,7 @@ class Response
      */
     public function isReady(): bool
     {
-        return $this->contents || (is_file($this->filePath) && is_readable($this->filePath));
+        return $this->contents !== null || (is_file($this->filePath) && is_readable($this->filePath));
     }
 
     /**
@@ -250,7 +250,7 @@ class Response
         if ($this->latteTemplate) {
             // Render contents using latte template...
             $latte = $this->app->createLatteEngine();
-            $this->latteParameters['contents'] = $this->contents
+            $this->latteParameters['contents'] = $this->contents !== null
                 ? (string)$this->contents
                 : file_get_contents($this->filePath);
             $latte->render($this->latteTemplate, $this->latteParameters);
@@ -260,7 +260,7 @@ class Response
                 header("$header: $value");
             }
 
-            if ($this->contents) {
+            if ($this->contents !== null) {
                 echo $this->contents;
             } else {
                 readfile($this->filePath);

@@ -14,7 +14,7 @@ class Markdown implements IProcessor
 
     public function process(Response $response): bool
     {
-        if ($response->contents) {
+        if ($response->contents !== null) {
             return false;
         }
 

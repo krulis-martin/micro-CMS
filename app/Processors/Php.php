@@ -18,14 +18,18 @@ class Php implements IProcessor
     private function executePhpScript(Response $response)
     {
         ob_start();
-        require $response->filePath;
-        $response->contents = ob_get_contents();
+        $result = require $response->filePath;
+        if ($result === false) {
+            $response->contents = null;
+        } else {
+            $response->contents = ob_get_contents();
+        }
         ob_end_clean();
     }
 
     public function process(Response $response): bool
     {
-        if ($response->contents) {
+        if ($response->contents !== null) {
             return false;
         }
 

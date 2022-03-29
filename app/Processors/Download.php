@@ -11,7 +11,7 @@ class Download implements IProcessor
 {
     public function process(Response $response): bool
     {
-        if ($response->contents || !$response->isFilePathValid()) {
+        if ($response->contents !== null || !$response->isFilePathValid()) {
             return false;
         }
 
