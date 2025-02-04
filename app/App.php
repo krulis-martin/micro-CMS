@@ -48,6 +48,12 @@ class App
     private $rawPath = null;
 
     /**
+     * @var string|null
+     * Path extracted from original uri without the base path.
+     */
+    private $relativePath = null;
+
+    /**
      * @var array
      * Path without prefix and splitted by '/'.
      */
@@ -126,6 +132,7 @@ class App
         }
 
         $this->path = array_values(array_filter(explode('/', $trimmedPath)));
+        $this->relativePath = implode('/', $this->path);
 
         if ($this->path && is_dir($this->getPath())) {
             $this->path[] = 'index'; // default file in a directory
@@ -231,7 +238,7 @@ class App
     private function getErrorTemplate(int $code): ?string
     {
         $templateDir = $this->getTemplatesDirectory();
-        $candidates = [ "$templateDir/error_$code.latte", "$templateDir/error.latte" ];
+        $candidates = ["$templateDir/error_$code.latte", "$templateDir/error.latte"];
         foreach ($candidates as $template) {
             if (is_file($template) && is_readable($template)) {
                 return $template;
@@ -252,7 +259,7 @@ class App
         $template = $this->getErrorTemplate($code);
         if ($template) {
             $latte = $this->createLatteEngine();
-            $latte->render($template, [ 'code' => $code, 'message' => $message ]);
+            $latte->render($template, ['code' => $code, 'message' => $message]);
         } else {
             header('Content-Type: text/plain');
             echo "HTTP Response: $code $message";

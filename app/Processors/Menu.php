@@ -10,27 +10,43 @@ use uCMS\Config;
  */
 class Menu implements IProcessor
 {
+    private function loadItems(Response $response, Config $items, int $level = 0): array
+    {
+        $menu = [];
+
+        foreach ($items as $item) {
+            $caption = $item->value('caption', null);
+            $url = $item->value('url', null);
+            if (!$caption) {
+                continue;
+            }
+
+            $menuObj = (object)[
+                'caption' => $response->getLocalizedValue($caption),
+                'url' => $url,
+                'active' => $url === $response->app->relativePath,
+                'subitems' => null,
+            ];
+
+            if ($level === 0 && isset($item->subitems)) {
+                $menuObj->subitems = $this->loadItems($response, $item->subitems, $level + 1);
+                foreach ($menuObj->subitems as $sub) {
+                    if ($sub->active) {
+                        $menuObj->active = true;
+                    }
+                }
+            }
+
+            $menu[] = $menuObj;
+        }
+        return $menu;
+    }
+
     public function process(Response $response): bool
     {
         if ($response->latteTemplate) {
             $menuConfig = Config::loadYaml(__DIR__ . '/../../config/menu.yaml');
-            $menu = [];
-            $currentPath = implode('/', $response->app->path);
-            foreach ($menuConfig->items as $item) {
-                $caption = $item->value('caption', null);
-                $url = $item->value('url', null);
-                if (!$caption || !$url) {
-                    continue;
-                }
-
-                $menu[] = (object)[
-                    'caption' => $response->getLocalizedValue($caption),
-                    'url' => $url,
-                    'active' => $url === $currentPath,
-                ];
-            }
-
-            $response->latteParameters['menu'] = $menu;
+            $response->latteParameters['menu'] = $this->loadItems($response, $menuConfig->items);
         }
 
         return false;

@@ -7,3 +7,10 @@ items:
     caption:
       en: About
       cs: O demu
+  - url: pages/master
+    caption: Master Page
+    subitems:
+      - url: pages/master/first
+        caption: First Subpage
+      - url: pages/sub/second
+        caption: Second Subpage
