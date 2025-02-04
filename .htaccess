@@ -17,6 +17,8 @@
 	# prevents files starting with dot to be viewed by browser
 	# RewriteRule /\.|^\.(?!well-known/) - [F]
 
+	RewriteCond %{REQUEST_URI} ^/micro-CMS/?$
+	RewriteRule .* /micro-CMS/pages [L]
 	# front controller
 	RewriteCond %{REQUEST_URI} !=index.php
 	RewriteCond %{REQUEST_URI} !^/micro-CMS/resources/
