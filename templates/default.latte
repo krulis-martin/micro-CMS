@@ -18,11 +18,26 @@
 		display: block;
 		top: 95%;
 	}
+
+	body, html {
+		height: 100%;
+	}
+
+	#main-wrap {
+		min-height: 100%;
+		padding-bottom: 4rem;
+	}
+	
+	#footer-wrap {
+		height: 2.5rem;
+		margin-top: -2.5rem;
+		width: 100%;
+	}
 	</style>
 </head>
 <body>
-
-<div class="container my-3">
+<div id="main-wrap" class="pt-3">
+<div class="container mb-3">
 	<h1>{$heading}</h1>
 </div>
 
@@ -59,6 +74,13 @@
 
 <div class="container mt-3">{$contents|noescape}</div>
 
+</div>
+<div id="footer-wrap" class="border-top bg-light">
+	<footer class="container p-2 text-small text-muted">
+		<span class="float-left">&copy; Martin Kruliš</span>
+		<span class="float-right">available on <a href="https://github.com/krulis-martin/micro-CMS">GitHub</a></span>
+	</footer>
+</div>
 </body>
 
 </html>
