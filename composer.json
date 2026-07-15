@@ -10,7 +10,7 @@
         }
     ],
     "require": {
-        "erusev/parsedown": "^1.7",
-        "latte/latte": "^2.5"
+        "erusev/parsedown": "^1.8",
+        "latte/latte": "^3.1"
     }
 }

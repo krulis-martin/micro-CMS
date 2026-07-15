@@ -9,9 +9,7 @@ use Iterator;
 /**
  * Exception thrown when something goes wrong with the configuration.
  */
-class ConfigException extends Exception
-{
-}
+class ConfigException extends Exception {}
 
 
 /**
@@ -63,7 +61,7 @@ class Config implements ArrayAccess, Iterator
      * @param $default Default value returned in case the $key item is not present in the structure.
      * @return any Raw value from the parsed config or default if missing.
      */
-    public function value(string $key = null, $default = null)
+    public function value(?string $key = null, $default = null)
     {
         if ($key === null) {
             return $this->data;
@@ -81,7 +79,7 @@ class Config implements ArrayAccess, Iterator
      * PHP Accessor Methods
      */
 
-    public function __isset($name)
+    public function __isset(string $name)
     {
         if (!is_array($this->data)) {
             throw new ConfigException("Trying to access '$name' key on a scalar value.");
@@ -89,7 +87,7 @@ class Config implements ArrayAccess, Iterator
         return array_key_exists($name, $this->data);
     }
 
-    public function __get($name)
+    public function __get(string $name): Config
     {
         if (!is_array($this->data)) {
             throw new ConfigException("Trying to access '$name' key on a scalar value.");
@@ -97,12 +95,12 @@ class Config implements ArrayAccess, Iterator
         return new Config(array_key_exists($name, $this->data) ? $this->data[$name] : []);
     }
 
-    public function __set($name, $value)
+    public function __set(string $name, mixed $value): void
     {
         throw new ConfigException("Config is read-only.");
     }
 
-    public function __unset($name)
+    public function __unset(string $name): void
     {
         throw new ConfigException("Config is read-only.");
     }
@@ -111,7 +109,7 @@ class Config implements ArrayAccess, Iterator
      * ArrayAccess
      */
 
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         if (!is_array($this->data)) {
             throw new ConfigException("Trying to access '$offset' key on a scalar value.");
@@ -119,7 +117,7 @@ class Config implements ArrayAccess, Iterator
         return array_key_exists($offset, $this->data);
     }
 
-    public function offsetGet($offset)
+    public function offsetGet($offset): Config
     {
         if (!is_array($this->data)) {
             throw new ConfigException("Trying to access '$offset' key on a scalar value.");
@@ -127,12 +125,12 @@ class Config implements ArrayAccess, Iterator
         return new Config(array_key_exists($offset, $this->data) ? $this->data[$offset] : []);
     }
 
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         throw new ConfigException("Config is read-only.");
     }
 
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         throw new ConfigException("Config is read-only.");
     }
@@ -141,7 +139,7 @@ class Config implements ArrayAccess, Iterator
      * Iterator
      */
 
-    public function current()
+    public function current(): mixed
     {
         if (!is_array($this->data)) {
             throw new ConfigException("Trying to iterate over a scalar value.");
@@ -149,7 +147,7 @@ class Config implements ArrayAccess, Iterator
         return new Config(current($this->data));
     }
 
-    public function key()
+    public function key(): mixed
     {
         if (!is_array($this->data)) {
             throw new ConfigException("Trying to iterate over a scalar value.");
@@ -157,7 +155,7 @@ class Config implements ArrayAccess, Iterator
         return key($this->data);
     }
 
-    public function next()
+    public function next(): void
     {
         if (!is_array($this->data)) {
             throw new ConfigException("Trying to iterate over a scalar value.");
@@ -165,7 +163,7 @@ class Config implements ArrayAccess, Iterator
         next($this->data);
     }
 
-    public function rewind()
+    public function rewind(): void
     {
         if (!is_array($this->data)) {
             throw new ConfigException("Trying to iterate over a scalar value.");
@@ -173,7 +171,7 @@ class Config implements ArrayAccess, Iterator
         reset($this->data);
     }
 
-    public function valid()
+    public function valid(): bool
     {
         if (!is_array($this->data)) {
             throw new ConfigException("Trying to iterate over a scalar value.");

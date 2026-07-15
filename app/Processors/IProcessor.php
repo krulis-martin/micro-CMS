@@ -10,8 +10,8 @@ use uCMS\Response;
 interface IProcessor
 {
     /**
-     * Process (augment) the response, which is an object being edited inplace.
-     * @param Response
+     * Process (augment) the response, which is an object being edited in place.
+     * @param Response $response The response object to be processed
      * @return bool True, if other processors should also attempt to process the response;
      *              False, if the chain of responsibility should be immediately interrupted.
      */

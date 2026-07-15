@@ -3,7 +3,6 @@
 namespace uCMS;
 
 use Exception;
-use Latte;
 
 /**
  * Wrapper that holds the contents of the response.
@@ -51,7 +50,7 @@ class Response
     /**
      * Validate whether actual file path (with optional suffix) is valid.
      * I.e., it points to a file that exists and is readable.
-     * @param string $suffix Optional suffix to be appedned to the path
+     * @param string $suffix Optional suffix to be appended to the path
      * @return bool
      */
     public function isFilePathValid(string $suffix = ''): bool
@@ -86,14 +85,14 @@ class Response
 
         // Prepare language suffixes (like `_en`) for the possible translations
         if ($this->lang !== null) {
-            $langs = [ "_$this->lang", '' /* no translations is tested right after exact match */ ];
+            $langs = ["_$this->lang", '' /* no translations is tested right after exact match */];
             foreach ($this->app->getLangs() as $lang) {
                 if ($lang !== $this->lang) {
                     $langs[] = "_$lang";
                 }
             }
         } else {
-            $langs = [ '' ]; // no suffix
+            $langs = ['']; // no suffix
         }
 
         // Let's try appending allowed extensions using path as prefix.
@@ -188,7 +187,7 @@ class Response
     /**
      * Read-only accessor to private values.
      */
-    public function __get($name)
+    public function __get(string $name)
     {
         if (isset($this->$name)) {
             return $this->$name;
@@ -200,7 +199,7 @@ class Response
     /**
      * Isset tester that accompanies the read-only private values accessor.
      */
-    public function __isset($name)
+    public function __isset(string $name)
     {
         return isset($this->$name);
     }
@@ -211,7 +210,7 @@ class Response
      * @param string $filePath Actual path to file being served (or its prefix)
      * @param string|null $lang Requested translation, null if i18n is not active
      */
-    public function __construct(App $app, string $filePath, string $lang = null)
+    public function __construct(App $app, string $filePath, ?string $lang = null)
     {
         $this->app = $app;
         $this->lang = $lang;

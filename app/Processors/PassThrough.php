@@ -76,9 +76,9 @@ class PassThrough implements IProcessor
 
     /**
      * Constructor expects the list of recognized extensions and their MIME types.
-     * @param array|null $extensions Array [extension => MIME], default list is used if omited
+     * @param array|null $extensions Array [extension => MIME], default list is used if omitted
      */
-    public function __construct(array $extensions = null)
+    public function __construct(?array $extensions = null)
     {
         $this->extensions = $extensions !== null ? $extensions : self::DEFAULT_EXTENSIONS;
     }
