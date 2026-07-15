@@ -83,7 +83,7 @@ class App
     /**
      * Read-only accessor to private values.
      */
-    public function __get($name)
+    public function __get(string $name)
     {
         if (isset($this->$name)) {
             return $this->$name;
@@ -95,7 +95,7 @@ class App
     /**
      * Isset tester that accompanies the read-only private values accessor.
      */
-    public function __isset($name)
+    public function __isset(string $name)
     {
         return isset($this->$name);
     }
@@ -104,9 +104,9 @@ class App
      * Internationalization Support
      */
 
-    public function getBaseUri()
+    public function getBaseUri(): string
     {
-        return $this->config->value('baseUri', '/');
+        return (string)$this->config->value('baseUri', '/');
     }
 
     /**
@@ -144,7 +144,7 @@ class App
      * @param string[]|null $path Array of string tokens (steps of URI path). If missing, $this->path is used instead.
      * @return string
      */
-    private function getPath(array $path = null): string
+    private function getPath(?array $path = null): string
     {
         if ($path === null) {
             $path = $this->path;
@@ -158,7 +158,7 @@ class App
     public function getLangs(): ?array
     {
         $langs = $this->config->value('langs', []);
-        return ($langs && count($langs) > 1) ? $langs : null;
+        return ($langs && is_array($langs) && count($langs) > 1) ? $langs : null;
     }
 
     /**
@@ -168,7 +168,7 @@ class App
     private function getLangFromHTTP(): ?string
     {
         $langs = $this->getLangs();
-        $acceptLangs = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+        $acceptLangs = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '');
         foreach ($acceptLangs as $lang) {
             $lang = preg_replace('/;q=.*$/', '', trim($lang)); // trim and remove quality...
             if (in_array($lang, $langs)) {
@@ -186,7 +186,7 @@ class App
     }
 
     /**
-     * Process langs config and fingure out current language.
+     * Process langs config and figure out current language.
      * Handle language change (from query data).
      */
     private function initLangs()
@@ -222,7 +222,7 @@ class App
             // Try to get the language from Accept-Language HTTP header...
             $this->currentLang = $httpLang;
         } elseif (in_array('en', $langs)) {
-            // English is prefered default...
+            // English is preferred default...
             $this->currentLang = 'en';
         } else {
             // If everything fails, get first lang of the config...
@@ -344,7 +344,11 @@ class App
      */
     public function getTemplatesDirectory(): string
     {
-        return __DIR__ . '/../' . $this->config->value('templates', 'templates');
+        $templateDir = $this->config->value('templates', 'templates');
+        if (!is_string($templateDir)) {
+            throw new Exception("Config value 'templates' must be a string.");
+        }
+        return __DIR__ . '/../' . $templateDir;
     }
 
     /**
@@ -354,10 +358,13 @@ class App
     {
         $latte = new Latte\Engine();
         $tmpDir = $this->config->value('tmpDir', 'tmp');
+        if (!is_string($tmpDir)) {
+            throw new Exception("Config value 'tmpDir' must be a string.");
+        }
         if ($tmpDir[0] !== '/') {
             $tmpDir = __DIR__ . '/../' . $tmpDir . '/latte';
         }
-        $latte->setTempDirectory($tmpDir);
+        $latte->setCacheDirectory($tmpDir);
         return $latte;
     }
 }

@@ -25,7 +25,9 @@ class Config implements ArrayAccess, Iterator
     public static function loadYaml(string $fileName): Config
     {
         if (!function_exists('yaml_parse_file')) {
-            throw new Exception("Function 'yaml_parse_file' not found. PHP requires Yaml extension for uCMS\Config::loadYaml to work.");
+            throw new Exception(
+                "Function 'yaml_parse_file' not found. PHP requires Yaml extension for uCMS\Config::loadYaml to work."
+            );
         }
 
         if (!file_exists($fileName) || !is_file($fileName) || !is_readable($fileName)) {
@@ -59,9 +61,9 @@ class Config implements ArrayAccess, Iterator
      * Safe way to get raw parsed value (typically scalar from the structure leaf).
      * @param string|null $key Structure item identifier. If missing, the whole structure in config is returned.
      * @param $default Default value returned in case the $key item is not present in the structure.
-     * @return any Raw value from the parsed config or default if missing.
+     * @return mixed Raw value from the parsed config or default if missing.
      */
-    public function value(?string $key = null, $default = null)
+    public function value(?string $key = null, $default = null): mixed
     {
         if ($key === null) {
             return $this->data;
